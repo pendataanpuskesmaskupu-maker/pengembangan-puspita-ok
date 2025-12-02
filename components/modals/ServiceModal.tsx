@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Modal } from './Modal';
 import type { Participant, Category, MeasurementRecord, SkriningPHQ2, SkriningGAD2, SkriningEPDS } from '../../types';
-import { getCategoryLabel, getCategoryTheme, formatDetailedAge, calculateAge, formatDate, calculateHealthServiceStatus, calculateAgeInMonths, getStatusColor, PHQ2_QUESTIONS, GAD2_QUESTIONS, EPDS_QUESTIONS, calculatePHQ2Score, calculateGAD2Score, calculateEPDSScore } from '../../utils/helpers';
+import { getCategoryLabel, getCategoryTheme, formatDetailedAge, calculateAge, formatDate, calculateHealthServiceStatus, calculateAgeInMonths, getStatusColor, PHQ2_QUESTIONS, GAD2_QUESTIONS, EPDS_QUESTIONS, EPDS_OPTIONS_DETAILS, calculatePHQ2Score, calculateGAD2Score, calculateEPDSScore } from '../../utils/helpers';
 import { useToast } from '../../contexts/ToastContext';
 
 interface ServiceModalProps {
@@ -28,80 +28,6 @@ const standardMentalOptions = [
     { label: "Hampir setiap hari", value: 3 }
 ];
 
-// Deskripsi Pilihan Jawaban EPDS dengan Skornya
-const EPDS_OPTIONS_DETAILS = [
-    // Q1: Tertawa (Reverse: 0=Best)
-    [
-        { label: "Sama seperti biasanya", score: 0 },
-        { label: "Tidak terlalu banyak", score: 1 },
-        { label: "Hanya sedikit", score: 2 },
-        { label: "Tidak sama sekali", score: 3 }
-    ],
-    // Q2: Menantikan hal (Reverse: 0=Best)
-    [
-        { label: "Sama seperti biasanya", score: 0 },
-        { label: "Agak kurang dari biasanya", score: 1 },
-        { label: "Jauh kurang dari biasanya", score: 2 },
-        { label: "Hampir tidak sama sekali", score: 3 }
-    ],
-    // Q3: Menyalahkan diri
-    [
-        { label: "Ya, sering sekali", score: 3 },
-        { label: "Ya, kadang-kadang", score: 2 },
-        { label: "Jarang", score: 1 },
-        { label: "Tidak pernah", score: 0 }
-    ],
-    // Q4: Cemas
-    [
-        { label: "Tidak sama sekali", score: 0 },
-        { label: "Jarang", score: 1 },
-        { label: "Kadang-kadang", score: 2 },
-        { label: "Sering", score: 3 }
-    ],
-    // Q5: Takut/Panik
-    [
-        { label: "Ya, sering sekali", score: 3 },
-        { label: "Ya, kadang-kadang", score: 2 },
-        { label: "Jarang", score: 1 },
-        { label: "Tidak sama sekali", score: 0 }
-    ],
-    // Q6: Kewalahan
-    [
-        { label: "Ya, hampir setiap saat", score: 3 },
-        { label: "Ya, kadang-kadang", score: 2 },
-        { label: "Jarang", score: 1 },
-        { label: "Tidak, saya bisa mengatasinya", score: 0 }
-    ],
-    // Q7: Sulit tidur
-    [
-        { label: "Ya, sering sekali", score: 3 },
-        { label: "Ya, kadang-kadang", score: 2 },
-        { label: "Jarang", score: 1 },
-        { label: "Tidak pernah", score: 0 }
-    ],
-    // Q8: Sedih/Menderita
-    [
-        { label: "Ya, sering sekali", score: 3 },
-        { label: "Ya, kadang-kadang", score: 2 },
-        { label: "Jarang", score: 1 },
-        { label: "Tidak pernah", score: 0 }
-    ],
-    // Q9: Menangis
-    [
-        { label: "Ya, sering sekali", score: 3 },
-        { label: "Ya, kadang-kadang", score: 2 },
-        { label: "Jarang", score: 1 },
-        { label: "Tidak pernah", score: 0 }
-    ],
-    // Q10: Menyakiti diri
-    [
-        { label: "Ya, cukup sering", score: 3 },
-        { label: "Kadang-kadang", score: 2 },
-        { label: "Jarang", score: 1 },
-        { label: "Tidak pernah", score: 0 }
-    ]
-];
-
 const initialServiceState = {
     imunisasi: [] as string[],
     vitaminA: '' as 'Biru' | 'Merah' | '',
@@ -113,9 +39,6 @@ const initialServiceState = {
     skriningTBC: { batuk: false, demam: false, beratBadan: false, kontak: false },
     pemeriksaanHB: '',
     skriningIndera: { penglihatanKanan: '' as 'Normal' | 'Gangguan' | '', penglihatanKiri: '' as 'Normal' | 'Gangguan' | '', pendengaran: '' as 'Normal' | 'Gangguan' | '' },
-    
-    // Remove skriningJiwa boolean as it is now always shown/processed if filled
-    // skriningJiwa: false, 
     
     // New State for Mental Health Answers
     phq2Answers: [0, 0],
@@ -399,19 +322,21 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onS
                             <p className="text-xs text-gray-600 mb-4">Jawab berdasarkan perasaan Anda selama 7 hari terakhir.</p>
                             <div className="space-y-4">
                                 {EPDS_QUESTIONS.map((q, i) => (
-                                    <div key={i} className="bg-white p-3 rounded border border-gray-200">
-                                        <p className="font-medium text-sm mb-2 text-gray-900">{q}</p>
-                                        <div className="flex gap-4 text-sm">
-                                            {[0, 1, 2, 3].map(val => (
-                                                <label key={val} className="flex items-center gap-1 cursor-pointer">
+                                    <div key={i} className="bg-white p-4 rounded border border-gray-200">
+                                        <p className="font-medium text-sm mb-3 text-gray-900">{q}</p>
+                                        {/* CHANGE: Use flex-col instead of flex-row for vertical list */}
+                                        <div className="flex flex-col gap-2">
+                                            {EPDS_OPTIONS_DETAILS[i].map((option) => (
+                                                <label key={option.score} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded transition-colors">
                                                     <input 
                                                         type="radio" 
                                                         name={`epds-${i}`} 
-                                                        checked={serviceData.epdsAnswers[i] === val} 
-                                                        onChange={() => handleMentalScoreChange('epds', i, val)}
-                                                        className="text-purple-600 focus:ring-purple-500"
+                                                        checked={serviceData.epdsAnswers[i] === option.score} 
+                                                        onChange={() => handleMentalScoreChange('epds', i, option.score)}
+                                                        className="text-purple-600 focus:ring-purple-500 h-4 w-4"
                                                     />
-                                                    <span className="text-gray-900 font-medium">{val}</span>
+                                                    {/* CHANGE: Display text and score in parentheses */}
+                                                    <span className="text-gray-900 font-medium text-sm">{option.label} <span className="text-gray-400 text-xs">({option.score})</span></span>
                                                 </label>
                                             ))}
                                         </div>
@@ -774,20 +699,22 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({ isOpen, onClose, onS
                                 <p className="text-xs text-gray-600 mb-4">Jawab berdasarkan perasaan Anda selama 7 hari terakhir.</p>
                                 <div className="space-y-4">
                                     {EPDS_QUESTIONS.map((q, i) => (
-                                        <div key={i} className="bg-white p-3 rounded border border-gray-200">
-                                            <p className="font-medium text-sm mb-2 text-gray-900">{q}</p>
-                                            <div className="flex gap-4 text-sm">
-                                                {[0, 1, 2, 3].map(val => (
-                                                    <label key={val} className="flex items-center gap-1 cursor-pointer">
-                                                        <input 
-                                                            type="radio" 
-                                                            name={`epds-${i}`} 
-                                                            checked={serviceData.epdsAnswers[i] === val} 
-                                                            onChange={() => handleMentalScoreChange('epds', i, val)}
-                                                            className="text-purple-600 focus:ring-purple-500"
-                                                        />
-                                                        <span className="text-gray-900 font-medium">{val}</span>
-                                                    </label>
+                                    <div key={i} className="bg-white p-4 rounded border border-gray-200">
+                                        <p className="font-medium text-sm mb-3 text-gray-900">{q}</p>
+                                        {/* CHANGE: Use flex-col instead of flex-row for vertical list */}
+                                        <div className="flex flex-col gap-2">
+                                            {EPDS_OPTIONS_DETAILS[i].map((option) => (
+                                                <label key={option.score} className="flex items-center gap-3 cursor-pointer p-2 hover:bg-gray-50 rounded transition-colors">
+                                                    <input 
+                                                        type="radio" 
+                                                        name={`epds-${i}`} 
+                                                        checked={serviceData.epdsAnswers[i] === option.score} 
+                                                        onChange={() => handleMentalScoreChange('epds', i, option.score)}
+                                                        className="text-purple-600 focus:ring-purple-500 h-4 w-4"
+                                                    />
+                                                    {/* CHANGE: Display text and score in parentheses */}
+                                                    <span className="text-gray-900 font-medium text-sm">{option.label} <span className="text-gray-400 text-xs">({option.score})</span></span>
+                                                </label>
                                                 ))}
                                             </div>
                                         </div>

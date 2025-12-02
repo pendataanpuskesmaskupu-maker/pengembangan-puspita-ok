@@ -569,6 +569,30 @@ export const EPDS_QUESTIONS = [
     "10. Pikiran untuk menyakiti diri sendiri pernah muncul dalam benak saya." // Normal
 ];
 
+// EXPORTED FOR USE IN MODALS
+export const EPDS_OPTIONS_DETAILS = [
+    // Q1
+    [{ label: "Sama seperti biasanya", score: 0 }, { label: "Tidak terlalu banyak", score: 1 }, { label: "Hanya sedikit", score: 2 }, { label: "Tidak sama sekali", score: 3 }],
+    // Q2
+    [{ label: "Sama seperti biasanya", score: 0 }, { label: "Agak kurang dari biasanya", score: 1 }, { label: "Jauh kurang dari biasanya", score: 2 }, { label: "Hampir tidak sama sekali", score: 3 }],
+    // Q3
+    [{ label: "Ya, sering sekali", score: 3 }, { label: "Ya, kadang-kadang", score: 2 }, { label: "Jarang", score: 1 }, { label: "Tidak pernah", score: 0 }],
+    // Q4
+    [{ label: "Tidak sama sekali", score: 0 }, { label: "Jarang", score: 1 }, { label: "Kadang-kadang", score: 2 }, { label: "Sering", score: 3 }],
+    // Q5
+    [{ label: "Ya, sering sekali", score: 3 }, { label: "Ya, kadang-kadang", score: 2 }, { label: "Jarang", score: 1 }, { label: "Tidak sama sekali", score: 0 }],
+    // Q6
+    [{ label: "Ya, hampir setiap saat", score: 3 }, { label: "Ya, kadang-kadang", score: 2 }, { label: "Jarang", score: 1 }, { label: "Tidak, saya bisa mengatasinya", score: 0 }],
+    // Q7
+    [{ label: "Ya, sering sekali", score: 3 }, { label: "Ya, kadang-kadang", score: 2 }, { label: "Jarang", score: 1 }, { label: "Tidak pernah", score: 0 }],
+    // Q8
+    [{ label: "Ya, sering sekali", score: 3 }, { label: "Ya, kadang-kadang", score: 2 }, { label: "Jarang", score: 1 }, { label: "Tidak pernah", score: 0 }],
+    // Q9
+    [{ label: "Ya, sering sekali", score: 3 }, { label: "Ya, kadang-kadang", score: 2 }, { label: "Jarang", score: 1 }, { label: "Tidak pernah", score: 0 }],
+    // Q10
+    [{ label: "Ya, cukup sering", score: 3 }, { label: "Kadang-kadang", score: 2 }, { label: "Jarang", score: 1 }, { label: "Tidak pernah", score: 0 }]
+];
+
 // --- Scoring Logic ---
 
 export const calculatePHQ2Score = (q1: number, q2: number): SkriningPHQ2 => {
@@ -592,28 +616,10 @@ export const calculateGAD2Score = (q1: number, q2: number): SkriningGAD2 => {
 };
 
 export const calculateEPDSScore = (answers: number[]): SkriningEPDS => {
-    // Standard EPDS Scoring usually 0,1,2,3.
-    // Typically Q1, Q2, Q4 are reverse scored in terms of "Positive Feelings" = 0 score.
-    // But here we assume the input `answers` array ALREADY contains the correct 0-3 value based on the selected radio button.
-    // The UI should map the text options to 0, 1, 2, 3 correctly.
-    
-    // Assuming the UI passes 0 for "best" and 3 for "worst" for ALL questions for simplicity in this calculation helper.
-    // Note: If the UI provides raw indices, we'd need mapping logic here.
-    // Let's assume the UI sends the calculated score for each question (0 to 3).
-    
     const score = answers.reduce((a, b) => a + b, 0);
-    
     let interpretation = "Normal: Risiko depresi rendah.";
-    if (score >= 13) {
-        interpretation = "Positif: Kemungkinan Depresi Postpartum Berat. Segera rujuk.";
-    } else if (score >= 10) {
-        interpretation = "Borderline: Risiko Depresi. Perlu pemantauan.";
-    }
-    
-    // Specific check for self-harm (Question 10)
-    if (answers[9] > 0) {
-        interpretation += " PERHATIAN: Ada risiko menyakiti diri sendiri.";
-    }
-
+    if (score >= 13) interpretation = "Positif: Kemungkinan Depresi Postpartum Berat. Segera rujuk.";
+    else if (score >= 10) interpretation = "Borderline: Risiko Depresi. Perlu pemantauan.";
+    if (answers[9] > 0) interpretation += " PERHATIAN: Ada risiko menyakiti diri sendiri.";
     return { answers, score, interpretation };
 };
